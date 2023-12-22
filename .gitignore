@@ -1,0 +1,15 @@
+synergistic-equity-app/node_modules
+
+/synergistic-equity-app/.cache
+/synergistic-equity-app/build
+/synergistic-equity-app/app/build
+/synergistic-equity-app/public/build/
+/synergistic-equity-app/public/_dev
+/synergistic-equity-app/app/public/build
+/synergistic-equity-app/prisma/dev.sqlite
+/synergistic-equity-app/prisma/dev.sqlite-journal
+/synergistic-equity-appdatabase.sqlite
+
+/synergistic-equity-app.env
+/synergistic-equity-apppackage-lock.json
+/synergistic-equity-appyarn.lock
