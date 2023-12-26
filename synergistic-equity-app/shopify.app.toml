@@ -2,18 +2,18 @@
 
 name = "synergistic-equity-app"
 client_id = "1d40468abbab667dabd1db83ad767d68"
-application_url = "https://albania-owned-scott-contact.trycloudflare.com"
+application_url = "https://travel-mind-amend-respondents.trycloudflare.com"
 embedded = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products"
+scopes = "write_products,read_customers"
 
 [auth]
 redirect_urls = [
-  "https://albania-owned-scott-contact.trycloudflare.com/auth/callback",
-  "https://albania-owned-scott-contact.trycloudflare.com/auth/shopify/callback",
-  "https://albania-owned-scott-contact.trycloudflare.com/api/auth/callback"
+  "https://travel-mind-amend-respondents.trycloudflare.com/auth/callback",
+  "https://travel-mind-amend-respondents.trycloudflare.com/auth/shopify/callback",
+  "https://travel-mind-amend-respondents.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]

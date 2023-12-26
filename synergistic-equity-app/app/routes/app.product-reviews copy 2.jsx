@@ -1,29 +1,28 @@
-import { json } from "@remix-run/node";
 import {
   IndexTable,
-  Thumbnail,
-  EmptyState,
+
+
   useIndexResourceState,
   Text,
   useBreakpoints,
   Card,
-  Page,
-  Layout,
-  Icon,
-  InlineStack,
 } from '@shopify/polaris';
 import { useLoaderData, Link, useNavigate } from "@remix-run/react";
 import React from 'react';
 import { getProductReviews } from "../models/ProductReview.server";
 import { authenticate } from '../shopify.server';
+
 import { DiamondAlertMajor, ImageMajor } from "@shopify/polaris-icons";
-export async function loader({ request }) {
+
+export async function loadProductReviews({ request }) {
   const { admin, session } = await authenticate.admin(request);
   const productReviews = await getProductReviews(session.shop, admin.graphql);
+
   return json({
-    productReviews,
+    productReviews, json
   });
 }
+
 const EmptyProductReviewState = ({ onAction }) => (
   <EmptyState
     heading="Create Product for your product"
@@ -43,52 +42,41 @@ export default function ProductReviews() {
     singular: 'Product Review',
     plural: 'Product Reviews',
   };
+
   const { selectedResources, allResourcesSelected, handleSelectionChange } =
     useIndexResourceState(productReviews);
-  const handleRowClick = (id) => {
+  const handleRowClick = (id, url) => {
     // console.log(`Clicked customer with ID: ${id} ${url}`);
     navigate(`/app/product-review/${id}`);
     // Add your logic to handle row click, e.g., navigating to a details page
   };
   const rowMarkup = productReviews.map(
-    ({ id, productImage, productTitle, rating, comment, createdAt }, index) => (
+    ({ id, url, name, location, ratings, amountSpent }, index) => (
       <IndexTable.Row
         id={ id }
         key={ id }
         selected={ selectedResources.includes(id) }
         position={ index }
-        onClick={ () => handleRowClick(id) }
+        onClick={ () => handleRowClick(id, url) }
+
       >
         <IndexTable.Cell>
-          <Thumbnail
-            source={ productImage || ImageMajor }
-            alt={ productTitle }
-            size="small"
-          />
-        </IndexTable.Cell>
-        <IndexTable.Cell>
-          { productTitle }
-          {/* <Link to={ `/app/product-review/${productReview.id}` }>{ truncate(productReview.productTitle) }</Link> */ }
-        </IndexTable.Cell>
-        {/* <IndexTable.Cell>
-      { productReview.productDeleted ? (
-        <InlineStack align="start" gap="200">
-          <span style={ { width: "20px" } }>
-            <Icon source={ DiamondAlertMajor } tone="critical" />
-          </span>
-          <Text tone="critical" as="span">
-            product has been deleted
-          </Text>
-        </InlineStack>
-      ) : (
-        truncate(productReview.productTitle)
-      ) }
-    </IndexTable.Cell> */}
 
-        <IndexTable.Cell>{ comment }</IndexTable.Cell>
-        <IndexTable.Cell>{ rating }</IndexTable.Cell>
+          <Text fontWeight="bold" as="span">
+            { name }
+          </Text>
+
+        </IndexTable.Cell>
+        <IndexTable.Cell >{ location }</IndexTable.Cell>
         <IndexTable.Cell>
-          { new Date(createdAt).toDateString() }
+
+          { ratings }
+
+        </IndexTable.Cell>
+        <IndexTable.Cell>
+
+          { amountSpent }
+
         </IndexTable.Cell>
       </IndexTable.Row>
     ),
@@ -108,8 +96,10 @@ export default function ProductReviews() {
     // },
   ];
   return (
+
+
     <Page>
-      <ui-title-bar title="Product Reviews">
+      <ui-title-bar title="Product Review">
         <button variant="primary" onClick={ () => navigate("/app/product-review/new") }>
           Create Product Review
         </button>
@@ -120,44 +110,43 @@ export default function ProductReviews() {
             { productReviews.length === 0 ? (
               <EmptyProductReviewState onAction={ () => navigate("/app/product-review/new") } />
             ) : (
-
-              <IndexTable
-                condensed={ useBreakpoints().smDown }
-                resourceName={ resourceName }
-                itemCount={ productReviews.length }
-                selectedItemsCount={
-                  allResourcesSelected ? 'All' : selectedResources.length
-                }
-                onSelectionChange={ handleSelectionChange }
-                headings={ [
-                  { title: 'Product Image' },
-                  { title: 'Product' },
-                  { title: 'Comment' },
-                  { title: 'Rating' },
-                  { title: 'Created At' },
-                  // {
-                  //   id: 'order-count',
-                  //   title: (
-                  //     <Text as="span" alignment="end">
-                  //       Order count
-                  //     </Text>
-                  //   ),
-                  // },
-                  // {
-                  //   id: 'amount-spent',
-                  //   hidden: false,
-                  //   title: (
-                  //     <Text as="span" alignment="end">
-                  //       Amount spent
-                  //     </Text>
-                  //   ),
-                  // },
-                ] }
-                bulkActions={ bulkActions }
-              >
-                { rowMarkup }
-              </IndexTable>
-
+              <Card>
+                <IndexTable
+                  condensed={ useBreakpoints().smDown }
+                  resourceName={ resourceName }
+                  itemCount={ productReviews.length }
+                  selectedItemsCount={
+                    allResourcesSelected ? 'All' : selectedResources.length
+                  }
+                  onSelectionChange={ handleSelectionChange }
+                  headings={ [
+                    { title: 'Name' },
+                    { title: 'Location' },
+                    { title: 'Reviews' },
+                    { title: 'Amount Spent' },
+                    // {
+                    //   id: 'order-count',
+                    //   title: (
+                    //     <Text as="span" alignment="end">
+                    //       Order count
+                    //     </Text>
+                    //   ),
+                    // },
+                    // {
+                    //   id: 'amount-spent',
+                    //   hidden: false,
+                    //   title: (
+                    //     <Text as="span" alignment="end">
+                    //       Amount spent
+                    //     </Text>
+                    //   ),
+                    // },
+                  ] }
+                  bulkActions={ bulkActions }
+                >
+                  { rowMarkup }
+                </IndexTable>
+              </Card>
             ) }
           </Card>
         </Layout.Section>
