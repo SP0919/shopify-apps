@@ -1,86 +1,79 @@
 import { json } from "@remix-run/node";
-import { useLoaderData, Link, useNavigate } from "@remix-run/react";
-import { authenticate } from "../shopify.server";
 import {
-  Card,
-  EmptyState,
-  Layout,
-  Page,
   IndexTable,
   Thumbnail,
+  EmptyState,
+  useIndexResourceState,
   Text,
+  useBreakpoints,
+  Card,
+  Page,
+  Layout,
   Icon,
   InlineStack,
-} from "@shopify/polaris";
-
-import { getQRCodes } from "../models/QRCode.server";
-
+} from '@shopify/polaris';
+import { useLoaderData, Link, useNavigate } from "@remix-run/react";
+import React from 'react';
+import { getProductReviews } from "../models/ProductReview.server";
+import { authenticate } from '../shopify.server';
 import { DiamondAlertMajor, ImageMajor } from "@shopify/polaris-icons";
-
 export async function loader({ request }) {
   const { admin, session } = await authenticate.admin(request);
-  const qrCodes = await getQRCodes(session.shop, admin.graphql);
+  const productReviews = await getProductReviews(session.shop, admin.graphql, session.accessToken);
 
   return json({
-    qrCodes,
+    productReviews,
   });
 }
-
-const EmptyQRCodeState = ({ onAction }) => (
+const EmptyProductReviewState = ({ onAction }) => (
   <EmptyState
-    heading="Create unique QR codes for your product"
+    heading="Create Product for your product"
     action={ {
-      content: "Create QR code",
+      content: "Create Product Review",
       onAction,
     } }
     image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
   >
-    <p>Allow customers to scan codes and buy products using their phones.</p>
+    <p>Allow customer to review on products.</p>
   </EmptyState>
 );
+export default function ProductReviews() {
+  const navigate = useNavigate();
+  const { productReviews } = useLoaderData();
 
-function truncate(str, { length = 25 } = {}) {
-  if (!str) return "";
-  if (str.length <= length) return str;
-  return str.slice(0, length) + "…";
-}
-
-const QRTable = ({ qrCodes }) => (
-  <IndexTable
-    resourceName={ {
-      singular: "QR code",
-      plural: "QR codes",
-    } }
-    itemCount={ qrCodes.length }
-    headings={ [
-      { title: "Thumbnail", hidden: true },
-      { title: "Title" },
-      { title: "Product" },
-      { title: "Date created" },
-      { title: "Scans" },
-    ] }
-    selectable={ false }
-  >
-    { qrCodes.map((qrCode) => (
-      <QRTableRow key={ qrCode.id } qrCode={ qrCode } />
-    )) }
-  </IndexTable>
-);
-
-const QRTableRow = ({ qrCode }) => (
-  <IndexTable.Row id={ qrCode.id } position={ qrCode.id }>
-    <IndexTable.Cell>
-      <Thumbnail
-        source={ qrCode.productImage || ImageMajor }
-        alt={ qrCode.productTitle }
-        size="small"
-      />
-    </IndexTable.Cell>
-    <IndexTable.Cell>
-      <Link to={ `qrcodes/${qrCode.id}` }>{ truncate(qrCode.title) }</Link>
-    </IndexTable.Cell>
-    <IndexTable.Cell>
-      { qrCode.productDeleted ? (
+  const resourceName = {
+    singular: 'Product Review',
+    plural: 'Product Reviews',
+  };
+  const { selectedResources, allResourcesSelected, handleSelectionChange } = useIndexResourceState(productReviews);
+  const handleRowClick = (id) => {
+    // console.log(`Clicked customer with ID: ${id} ${url}`);
+    navigate(`/app/product-review/${id}`);
+    // Add your logic to handle row click, e.g., navigating to a details page
+  };
+  console.log(productReviews)
+  const rowMarkup = productReviews.map(
+    ({ id, productImage, productTitle, rating, comment, createdAt, first_name, last_name }, index) => (
+      <IndexTable.Row
+        id={ id }
+        key={ id }
+        selected={ selectedResources.includes(id) }
+        position={ index }
+        onClick={ () => handleRowClick(id) }
+      >
+        <IndexTable.Cell>
+          <Thumbnail
+            source={ productImage || ImageMajor }
+            alt={ productTitle }
+            size="small"
+          />
+        </IndexTable.Cell>
+        <IndexTable.Cell>
+          { productTitle }
+          {/* <Link to={ `/app/product-review/${productReview.id}` }>{ truncate(productReview.productTitle) }</Link> */ }
+        </IndexTable.Cell>
+        {/* <IndexTable.Cell>
+      { productReview.productDeleted ? (
         <InlineStack align="start" gap="200">
           <span style={ { width: "20px" } }>
             <Icon source={ DiamondAlertMajor } tone="critical" />
@@ -90,34 +83,85 @@ const QRTableRow = ({ qrCode }) => (
           </Text>
         </InlineStack>
       ) : (
-        truncate(qrCode.productTitle)
+        truncate(productReview.productTitle)
       ) }
-    </IndexTable.Cell>
-    <IndexTable.Cell>
-      { new Date(qrCode.createdAt).toDateString() }
-    </IndexTable.Cell>
-    <IndexTable.Cell>{ qrCode.scans }</IndexTable.Cell>
-  </IndexTable.Row>
-);
+    </IndexTable.Cell> */}
 
-export default function Index() {
-  const { qrCodes } = useLoaderData();
-  const navigate = useNavigate();
-
+        <IndexTable.Cell>{ first_name } { last_name }</IndexTable.Cell>
+        <IndexTable.Cell>{ comment }</IndexTable.Cell>
+        <IndexTable.Cell>{ rating }</IndexTable.Cell>
+        <IndexTable.Cell>
+          { new Date(createdAt).toDateString() }
+        </IndexTable.Cell>
+      </IndexTable.Row>
+    ),
+  );
+  const bulkActions = [
+    {
+      content: 'Delete Reviews',
+      onAction: () => console.log('Todo: implement bulk add tags'),
+    },
+    {
+      content: 'Disable Reviews',
+      onAction: () => console.log('Todo: implement bulk remove tags'),
+    },
+    {
+      content: 'Activate Reviews',
+      onAction: () => console.log('Todo: implement bulk delete'),
+    },
+  ];
   return (
     <Page>
-      <ui-title-bar title="QR codes">
-        <button variant="primary" onClick={ () => navigate("/app/qrcodes/new") }>
-          Create QR code
+      <ui-title-bar title="Product Reviews">
+        <button variant="primary" onClick={ () => navigate("/app/product-review/new") }>
+          Create Product Review
         </button>
       </ui-title-bar>
       <Layout>
         <Layout.Section>
           <Card padding="0">
-            { qrCodes.length === 0 ? (
-              <EmptyQRCodeState onAction={ () => navigate("qrcodes/new") } />
+            { productReviews.length === 0 ? (
+              <EmptyProductReviewState onAction={ () => navigate("/app/product-review/new") } />
             ) : (
-              <QRTable qrCodes={ qrCodes } />
+
+              <IndexTable
+                condensed={ useBreakpoints().smDown }
+                resourceName={ resourceName }
+                itemCount={ productReviews.length }
+                selectedItemsCount={
+                  allResourcesSelected ? 'All' : selectedResources.length
+                }
+                onSelectionChange={ handleSelectionChange }
+                headings={ [
+                  { title: 'Product Image' },
+                  { title: 'Product' },
+                  { title: 'Review By' },
+                  { title: 'Comment' },
+                  { title: 'Rating' },
+                  { title: 'Created At' },
+                  // {
+                  //   id: 'order-count',
+                  //   title: (
+                  //     <Text as="span" alignment="end">
+                  //       Order count
+                  //     </Text>
+                  //   ),
+                  // },
+                  // {
+                  //   id: 'amount-spent',
+                  //   hidden: false,
+                  //   title: (
+                  //     <Text as="span" alignment="end">
+                  //       Amount spent
+                  //     </Text>
+                  //   ),
+                  // },
+                ] }
+                bulkActions={ bulkActions }
+              >
+                { rowMarkup }
+              </IndexTable>
+
             ) }
           </Card>
         </Layout.Section>
@@ -125,3 +169,4 @@ export default function Index() {
     </Page>
   );
 }
+

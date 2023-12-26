@@ -46,37 +46,9 @@ import fetch from 'node-fetch';
 //   return json(await getProductReview(Number(params.id), admin.graphql));
 // }
 export async function loader({ request, params }) {
-  const { admin } = await authenticate.admin(request);
+  const { admin, session } = await authenticate.admin(request);
 
   if (params.id === "new") {
-    try {
-      //       // Fetch customer data for selection
-      //       const response = await graphql(
-      //         `
-      //               query {
-      //   customers(first: 10) {
-      //      edges {
-      //               node {
-      //                 id
-      //                 displayName
-      //                 email
-      //               }
-      //             }
-
-      //   }
-      // }
-
-      //     `,
-
-      //       );
-      //       console.log(response);
-      //       return
-    }
-    catch (error) {
-      console.error("Loader Error:", error); // Add this line
-      throw error;
-    }
-
     return json({
       destination: "product",
       saveHandle: "new",
@@ -85,7 +57,7 @@ export async function loader({ request, params }) {
     });
   }
 
-  return json(await getProductReview(Number(params.id), admin.graphql));
+  return json(await getProductReview(Number(params.id), admin.graphql, session.accessToken));
 }
 
 
@@ -102,7 +74,7 @@ export async function action({ request, params }) {
 
   if (data.action === "delete") {
     await db.productReview.delete({ where: { id: Number(params.id) } });
-    return redirect("/app/product-reviews");
+    return redirect("/app");
   }
 
 
@@ -122,7 +94,7 @@ export async function action({ request, params }) {
       ? await db.productReview.create({ data })
       : await db.productReview.update({ where: { id: Number(params.id) }, data });
 
-  return redirect(`/app/product-reviews`);
+  return redirect(`/app`);
 }
 
 export default function ProductReviewForm() {
@@ -144,33 +116,13 @@ export default function ProductReviewForm() {
 
   const navigate = useNavigate();
 
-  async function selectProduct() {
-    const products = await window.shopify.resourcePicker({
-      type: "product",
 
-      action: "select", // customized action verb, either 'select' or 'add',
-    });
-
-    if (products) {
-      const { images, id, variants, title, handle } = products[ 0 ];
-
-      setFormState({
-        ...formState,
-        productId: id,
-        productVariantId: variants[ 0 ].id,
-        productTitle: title,
-        productHandle: handle,
-        productAlt: images[ 0 ]?.altText,
-        productImage: images[ 0 ]?.originalSrc,
-      });
-    }
-  }
 
   const submit = useSubmit();
   function handleSave() {
     const data = {
 
-      productId: formState.productId || "",
+      productId: formState.productId || 8027309211897,
       userId: formState.userId || 7083761008889,
       rating: formState.rating || 5,
       comment: formState.comment || "",
@@ -185,7 +137,7 @@ export default function ProductReviewForm() {
   function handleStatusChange(type) {
     const data = {
 
-      productId: formState.productId || "",
+      productId: formState.productId || 8027309211897,
       userId: formState.userId || 7083761008889,
       rating: formState.rating || 5,
       comment: formState.comment || "",
@@ -195,13 +147,13 @@ export default function ProductReviewForm() {
 
     setCleanFormState({ ...formState });
 
-    submit(data, { method: "post" });
+    // submit(data, { method: "post" });
   }
 
   return (
     <Page>
       <ui-title-bar title={ productReview.id ? "Edit Product Review" : "Create new Product Review" }>
-        <button variant="breadcrumb" onClick={ () => navigate("/app/product-reviews") }>
+        <button variant="breadcrumb" onClick={ () => navigate("/app") }>
           Product Reviews
         </button>
       </ui-title-bar>
@@ -249,11 +201,7 @@ export default function ProductReviewForm() {
                   <Text as={ "h2" } variant="headingLg">
                     Product
                   </Text>
-                  { formState.productId ? (
-                    <Button variant="plain" onClick={ selectProduct }>
-                      Change product
-                    </Button>
-                  ) : null }
+
                 </InlineStack>
                 { formState.productId ? (
                   <InlineStack blockAlign="center" gap="500">
@@ -267,9 +215,7 @@ export default function ProductReviewForm() {
                   </InlineStack>
                 ) : (
                   <BlockStack gap="200">
-                    <Button onClick={ selectProduct } id="select-product">
-                      Select product
-                    </Button>
+
                     { errors.productId ? (
                       <InlineError
                         message={ errors.productId }

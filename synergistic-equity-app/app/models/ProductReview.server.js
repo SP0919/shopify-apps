@@ -2,14 +2,14 @@
 import invariant from "tiny-invariant";
 import db from "../db.server";
 
-export async function getProductReview(id, graphql) {
+export async function getProductReview(id, graphql, accessToken) {
   const productReview = await db.productReview.findFirst({ where: { id } });
 
   if (!productReview) {
     return null;
   }
 
-  return supplementProductReview(productReview, graphql);
+  return supplementProductReview(productReview, graphql, accessToken);
 }
 
 export async function getProductReviews(shop, graphql, accessToken) {
@@ -28,11 +28,8 @@ export async function getProductReviews(shop, graphql, accessToken) {
 }
 
 async function supplementProductReview(productReview, graphql, accessToken) {
-  // Fetch customer data using the Shopify REST API
-  const customerEndpoint = `https://${productReview.shop}/admin/api/${process.env.REACT_APP_SHOP_API_VERSION}/customers/${productReview.userId}.json`;
-
-  try {
-    const response = await fetch(customerEndpoint, {
+  const fetchData = async (endpoint) => {
+    const response = await fetch(endpoint, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -41,49 +38,32 @@ async function supplementProductReview(productReview, graphql, accessToken) {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch customer data: ${response.statusText}`);
+      throw new Error(`Failed to fetch data: ${response.statusText}`);
     }
 
-    const customerData = await response.json();
+    return await response.json();
+  };
 
-    // Fetch product data using the GraphQL API
-    const graphqlResponse = await graphql(
-      `
-        query supplementProductReview($productId: ID!) {
-          product(id: $productId) {
-            title
-            images(first: 1) {
-              nodes {
-                altText
-                url
-              }
-            }
-          }
-        }
-      `,
-      {
-        variables: {
-          productId: productReview.productId,
-        },
-      }
+  try {
+    const customerData = await fetchData(
+      `https://${productReview.shop}/admin/api/${process.env.REACT_APP_SHOP_API_VERSION}/customers/${productReview.userId}.json`
     );
-
-    const {
-      data: { product },
-    } = await graphqlResponse.json();
+    const productData = await fetchData(
+      `https://${productReview.shop}/admin/api/${process.env.REACT_APP_SHOP_API_VERSION}/products/${productReview.productId}.json`
+    );
 
     return {
       ...productReview,
-      productDeleted: !product?.title,
-      productTitle: product?.title,
-      productImage: product?.images?.nodes[0]?.url,
-      productAlt: product?.images?.nodes[0]?.altText,
+      hi: productData.product.title,
+      productTitle: productData?.product?.title,
+      productImage: productData?.product?.images?.[0]?.src,
+      productAlt: productData?.product?.images?.[0]?.alt,
       first_name: customerData.customer.first_name,
       last_name: customerData.customer.last_name,
     };
   } catch (error) {
-    console.error("Error fetching customer data:", error);
-    return productReview; // Return the original product review if there is an error
+    console.error("Error fetching data:", error);
+    return productReview;
   }
 }
 
