@@ -32,14 +32,56 @@ import { getProductReview, validateProductReview } from "../models/ProductReview
 import fetch from 'node-fetch';
 
 
+// export async function loader({ request, params }) {
+//   const { admin } = await authenticate.admin(request);
+
+//   if (params.id === "new") {
+//     return json({
+//       destination: "product",
+//       saveHandle: "new",
+//       title: "",
+//     });
+//   }
+
+//   return json(await getProductReview(Number(params.id), admin.graphql));
+// }
 export async function loader({ request, params }) {
   const { admin } = await authenticate.admin(request);
 
   if (params.id === "new") {
+    try {
+      //       // Fetch customer data for selection
+      //       const response = await graphql(
+      //         `
+      //               query {
+      //   customers(first: 10) {
+      //      edges {
+      //               node {
+      //                 id
+      //                 displayName
+      //                 email
+      //               }
+      //             }
+
+      //   }
+      // }
+
+      //     `,
+
+      //       );
+      //       console.log(response);
+      //       return
+    }
+    catch (error) {
+      console.error("Loader Error:", error); // Add this line
+      throw error;
+    }
+
     return json({
       destination: "product",
       saveHandle: "new",
       title: "",
+      // customers,
     });
   }
 
@@ -62,10 +104,7 @@ export async function action({ request, params }) {
     await db.productReview.delete({ where: { id: Number(params.id) } });
     return redirect("/app/product-reviews");
   }
-  if (data.action === "changeStatus") {
-    await db.productReview.update({ where: { id: Number(params.id) }, data });
-    return redirect("/app/product-reviews");
-  }
+
 
   const errors = validateProductReview(data);
 
@@ -73,6 +112,11 @@ export async function action({ request, params }) {
     return json({ errors }, { status: 422 });
   }
 
+  if (data.action === "changeStatus") {
+
+    await db.productReview.update({ where: { id: Number(params.id) }, data });
+    return redirect("/app/product-review/" + params.id);
+  }
   const productReview =
     params.id === "new"
       ? await db.productReview.create({ data })
@@ -127,7 +171,7 @@ export default function ProductReviewForm() {
     const data = {
 
       productId: formState.productId || "",
-      userId: formState.userId || 1,
+      userId: formState.userId || 7083761008889,
       rating: formState.rating || 5,
       comment: formState.comment || "",
       status: formState.status || "ACTIVE",
@@ -135,9 +179,25 @@ export default function ProductReviewForm() {
     };
 
     setCleanFormState({ ...formState });
+    console.log(data, '----------')
     submit(data, { method: "post" });
   }
-  console.log(formState)
+  function handleStatusChange(type) {
+    const data = {
+
+      productId: formState.productId || "",
+      userId: formState.userId || 7083761008889,
+      rating: formState.rating || 5,
+      comment: formState.comment || "",
+      status: type,
+
+    };
+
+    setCleanFormState({ ...formState });
+
+    submit(data, { method: "post" });
+  }
+
   return (
     <Page>
       <ui-title-bar title={ productReview.id ? "Edit Product Review" : "Create new Product Review" }>
@@ -224,6 +284,40 @@ export default function ProductReviewForm() {
 
               </BlockStack>
             </Card>
+
+            {/* <Card>
+              <BlockStack gap="500">
+                <InlineStack align="space-between">
+                  <Text as={ "h2" } variant="headingLg">
+                    Customer
+                  </Text>
+                  { formState.customerId ? (
+                    <Button variant="plain" onClick={ selectCustomer }>
+                      Change customer
+                    </Button>
+                  ) : null }
+                </InlineStack>
+                { formState.customerId ? (
+                  <InlineStack blockAlign="center" gap="500">
+                    <Text as="span" variant="headingMd" fontWeight="semibold">
+                      { formState.customerDisplayName } ({ formState.customerEmail })
+                    </Text>
+                  </InlineStack>
+                ) : (
+                  <BlockStack gap="200">
+                    <Button onClick={ selectCustomer } id="select-customer">
+                      Select customer
+                    </Button>
+                    { errors.customerId ? (
+                      <InlineError
+                        message={ errors.customerId }
+                        fieldID="customerId"
+                      />
+                    ) : null }
+                  </BlockStack>
+                ) }
+              </BlockStack>
+            </Card> */}
           </BlockStack>
         </Layout.Section>
 
@@ -245,16 +339,14 @@ export default function ProductReviewForm() {
                   loading: isStausChanging,
                   disabled: !productReview.id || !productReview || isSaving || isDeleting || isStausChanging,
                   primary: true,
-                  onAction: () =>
-                    submit({ action: "changeStatus" }, { method: "post" }),
+                  onClick: () => handleStatusChange("DISABLE")
                 } : {
 
                   content: "Activate",
                   loading: isDeleting,
                   disabled: !productReview.id || !productReview || isSaving || isDeleting || isStausChanging,
                   primary: true,
-                  onAction: () =>
-                    submit({ action: "changeStatus" }, { method: "post" }),
+                  onClick: () => handleStatusChange("ACTIVATE"),
 
                 }
             ] : "" }

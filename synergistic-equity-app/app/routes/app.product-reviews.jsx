@@ -19,7 +19,8 @@ import { authenticate } from '../shopify.server';
 import { DiamondAlertMajor, ImageMajor } from "@shopify/polaris-icons";
 export async function loader({ request }) {
   const { admin, session } = await authenticate.admin(request);
-  const productReviews = await getProductReviews(session.shop, admin.graphql);
+  const productReviews = await getProductReviews(session.shop, admin.graphql, session.accessToken);
+
   return json({
     productReviews,
   });
@@ -38,20 +39,20 @@ const EmptyProductReviewState = ({ onAction }) => (
 );
 export default function ProductReviews() {
   const navigate = useNavigate();
-  const { productReviews } = useLoaderData();;
+  const { productReviews } = useLoaderData();
+  console.log(productReviews)
   const resourceName = {
     singular: 'Product Review',
     plural: 'Product Reviews',
   };
-  const { selectedResources, allResourcesSelected, handleSelectionChange } =
-    useIndexResourceState(productReviews);
+  const { selectedResources, allResourcesSelected, handleSelectionChange } = useIndexResourceState(productReviews);
   const handleRowClick = (id) => {
     // console.log(`Clicked customer with ID: ${id} ${url}`);
     navigate(`/app/product-review/${id}`);
     // Add your logic to handle row click, e.g., navigating to a details page
   };
   const rowMarkup = productReviews.map(
-    ({ id, productImage, productTitle, rating, comment, createdAt }, index) => (
+    ({ id, productImage, productTitle, rating, comment, createdAt, first_name, last_name }, index) => (
       <IndexTable.Row
         id={ id }
         key={ id }
@@ -85,6 +86,7 @@ export default function ProductReviews() {
       ) }
     </IndexTable.Cell> */}
 
+        <IndexTable.Cell>{ first_name } { last_name }</IndexTable.Cell>
         <IndexTable.Cell>{ comment }</IndexTable.Cell>
         <IndexTable.Cell>{ rating }</IndexTable.Cell>
         <IndexTable.Cell>
@@ -102,10 +104,10 @@ export default function ProductReviews() {
       content: 'Disable Reviews',
       onAction: () => console.log('Todo: implement bulk remove tags'),
     },
-    // {
-    //   content: 'Delete ratings',
-    //   onAction: () => console.log('Todo: implement bulk delete'),
-    // },
+    {
+      content: 'Activate Reviews',
+      onAction: () => console.log('Todo: implement bulk Activate'),
+    },
   ];
   return (
     <Page>
@@ -132,6 +134,7 @@ export default function ProductReviews() {
                 headings={ [
                   { title: 'Product Image' },
                   { title: 'Product' },
+                  { title: 'Review By' },
                   { title: 'Comment' },
                   { title: 'Rating' },
                   { title: 'Created At' },
