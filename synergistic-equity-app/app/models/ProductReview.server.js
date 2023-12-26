@@ -2,17 +2,17 @@
 import invariant from "tiny-invariant";
 import db from "../db.server";
 
-export async function getProductReview(id, graphql) {
+export async function getProductReview(id, graphql, accessToken) {
   const productReview = await db.productReview.findFirst({ where: { id } });
 
   if (!productReview) {
     return null;
   }
 
-  return supplementProductReview(productReview, graphql);
+  return supplementProductReview(productReview, graphql, accessToken);
 }
 
-export async function getProductReviews(shop, graphql) {
+export async function getProductReviews(shop, graphql, accessToken) {
   const productReviews = await db.productReview.findMany({
     where: { shop },
     orderBy: { id: "desc" },
@@ -22,44 +22,49 @@ export async function getProductReviews(shop, graphql) {
 
   return Promise.all(
     productReviews.map((productReview) =>
-      supplementProductReview(productReview, graphql)
+      supplementProductReview(productReview, graphql, accessToken)
     )
   );
 }
 
-async function supplementProductReview(productReview, graphql) {
-  const response = await graphql(
-    `
-      query supplementProductReview($id: ID!) {
-        product(id: $id) {
-          title
-          images(first: 1) {
-            nodes {
-              altText
-              url
-            }
-          }
-        }
-      }
-    `,
-    {
-      variables: {
-        id: productReview.productId,
+async function supplementProductReview(productReview, graphql, accessToken) {
+  const fetchData = async (endpoint) => {
+    const response = await fetch(endpoint, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Shopify-Access-Token": accessToken,
       },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch data: ${response.statusText}`);
     }
-  );
 
-  const {
-    data: { product },
-  } = await response.json();
-
-  return {
-    ...productReview,
-    productDeleted: !product?.title,
-    productTitle: product?.title,
-    productImage: product?.images?.nodes[0]?.url,
-    productAlt: product?.images?.nodes[0]?.altText,
+    return await response.json();
   };
+
+  try {
+    const customerData = await fetchData(
+      `https://${productReview.shop}/admin/api/${process.env.REACT_APP_SHOP_API_VERSION}/customers/${productReview.userId}.json`
+    );
+    const productData = await fetchData(
+      `https://${productReview.shop}/admin/api/${process.env.REACT_APP_SHOP_API_VERSION}/products/${productReview.productId}.json`
+    );
+
+    return {
+      ...productReview,
+      hi: productData.product.title,
+      productTitle: productData?.product?.title,
+      productImage: productData?.product?.images?.[0]?.src,
+      productAlt: productData?.product?.images?.[0]?.alt,
+      first_name: customerData.customer.first_name,
+      last_name: customerData.customer.last_name,
+    };
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    return productReview;
+  }
 }
 
 export function validateProductReview(data) {
