@@ -98,6 +98,7 @@ export async function action({ request, params }) {
 }
 
 export default function ProductReviewForm() {
+  console.log('i am here')
   const errors = useActionData()?.errors || {};
 
   const productReview = useLoaderData();

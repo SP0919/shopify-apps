@@ -51,7 +51,7 @@ export default function ProductReviews() {
     navigate(`/app/product-review/${id}`);
     // Add your logic to handle row click, e.g., navigating to a details page
   };
-  console.log(productReviews)
+
   const rowMarkup = productReviews.map(
     ({ id, productImage, productTitle, rating, comment, createdAt, first_name, last_name }, index) => (
       <IndexTable.Row
