@@ -29,7 +29,7 @@ import { ImageMajor } from "@shopify/polaris-icons";
 
 import db from "../db.server";
 import { getProductReview, validateProductReview } from "../models/ProductReview.server";
-import fetch from 'node-fetch';
+
 
 
 // export async function loader({ request, params }) {

@@ -32,6 +32,23 @@ export async function getProductReviews(shop, graphql, accessToken) {
     )
   );
 }
+export async function getProductReviewsStorefront(shop, accessToken) {
+  const productReviews = await db.productReview.findMany({
+    where: {
+      shop: shop,
+      status: "ACTIVE",
+    },
+    orderBy: { id: "desc" },
+  });
+
+  if (productReviews.length === 0) return [];
+
+  return Promise.all(
+    productReviews.map((productReview) =>
+      supplementProductReview(productReview, "", accessToken)
+    )
+  );
+}
 
 async function supplementProductReview(productReview, graphql, accessToken) {
   const fetchData = async (endpoint) => {
