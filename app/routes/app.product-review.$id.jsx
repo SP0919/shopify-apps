@@ -71,13 +71,10 @@ export async function action({ request, params }) {
     ...Object.fromEntries(await request.formData()),
     shop,
   };
-
   if (data.action === "delete") {
     await db.productReview.delete({ where: { id: Number(params.id) } });
     return redirect("/app");
   }
-
-
   const errors = validateProductReview(data);
 
   if (errors) {
@@ -98,7 +95,7 @@ export async function action({ request, params }) {
 }
 
 export default function ProductReviewForm() {
-  console.log('i am here')
+
   const errors = useActionData()?.errors || {};
 
   const productReview = useLoaderData();
@@ -148,7 +145,7 @@ export default function ProductReviewForm() {
 
     setCleanFormState({ ...formState });
 
-    // submit(data, { method: "post" });
+    submit(data, { method: "post" });
   }
 
   return (

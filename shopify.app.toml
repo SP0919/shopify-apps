@@ -2,7 +2,7 @@
 
 name = "synergistic-equity-app"
 client_id = "1d40468abbab667dabd1db83ad767d68"
-application_url = "https://textiles-facts-ozone-lease.trycloudflare.com"
+application_url = "https://lose-attitudes-thin-tan.trycloudflare.com"
 embedded = true
 
 [access_scopes]
@@ -11,9 +11,9 @@ scopes = "write_products,read_customers"
 
 [auth]
 redirect_urls = [
-  "https://textiles-facts-ozone-lease.trycloudflare.com/auth/callback",
-  "https://textiles-facts-ozone-lease.trycloudflare.com/auth/shopify/callback",
-  "https://textiles-facts-ozone-lease.trycloudflare.com/api/auth/callback"
+  "https://lose-attitudes-thin-tan.trycloudflare.com/auth/callback",
+  "https://lose-attitudes-thin-tan.trycloudflare.com/auth/shopify/callback",
+  "https://lose-attitudes-thin-tan.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]

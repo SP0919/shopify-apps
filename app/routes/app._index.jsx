@@ -1,4 +1,4 @@
-import { json } from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
 import {
   IndexTable,
   Thumbnail,
@@ -12,11 +12,20 @@ import {
   Icon,
   InlineStack,
 } from '@shopify/polaris';
-import { useLoaderData, Link, useNavigate } from "@remix-run/react";
-import React from 'react';
-import { getProductReviews } from "../models/ProductReview.server";
+import {
+  useActionData,
+  useLoaderData,
+  useNavigation,
+  useSubmit,
+  useNavigate,
+} from "@remix-run/react";
+import React, { useState } from 'react';
+import { deleteProductReview, getProductReviews } from "../models/ProductReview.server";
 import { authenticate } from '../shopify.server';
 import { DiamondAlertMajor, ImageMajor } from "@shopify/polaris-icons";
+import db from "../db.server";
+
+
 export async function loader({ request }) {
   const { admin, session } = await authenticate.admin(request);
   const productReviews = await getProductReviews(session.shop, admin.graphql, session.accessToken);
@@ -25,6 +34,51 @@ export async function loader({ request }) {
     productReviews,
   });
 }
+export async function action({ request, params }) {
+  const { session } = await authenticate.admin(request);
+  const { shop } = session;
+  const data = {
+    ...Object.fromEntries(await request.formData()),
+    shop,
+  };
+  const selectedIdsAsNumbers = data.selectedIds.split(',').map((id) => Number(id));
+  if (data.action == "DELETE") {
+    try {
+
+      await db.productReview.deleteMany({ where: { id: { in: selectedIdsAsNumbers } } });
+      navigate("/app", { replace: true })
+      return json({ 'message': "sd" });
+    } catch (error) {
+      console.error('Error deleting product reviews:', error);
+      return error;
+    }
+  }
+  else {
+    try {
+      await db.productReview.updateMany({
+        where: {
+          id: {
+            in: selectedIdsAsNumbers,
+          },
+        },
+        data: {
+          status: data.action,
+
+        },
+      });
+      navigate("/app", { replace: true })
+      return json({ 'message': "sd" });
+    }
+    catch (error) {
+      console.error('Error deleting product reviews:', error);
+      return error;
+    }
+
+  }
+
+  // return redirect(`/app`);
+}
+
 const EmptyProductReviewState = ({ onAction }) => (
   <EmptyState
     heading="Create Product for your product"
@@ -38,6 +92,8 @@ const EmptyProductReviewState = ({ onAction }) => (
   </EmptyState>
 );
 export default function ProductReviews() {
+
+  const errors = useActionData()?.errors || {};
   const navigate = useNavigate();
   const { productReviews } = useLoaderData();
 
@@ -51,9 +107,56 @@ export default function ProductReviews() {
     navigate(`/app/product-review/${id}`);
     // Add your logic to handle row click, e.g., navigating to a details page
   };
+  const submit = useSubmit();
+  const nav = useNavigation();
+  // console.log(nav)
+  const handleAction = async (type) => {
+    const selectedIds = selectedResources;
+    console.log(`Selected IDs: ${selectedIds}`);
+    const data = {
+      selectedIds: selectedIds,
+      action: type
+    };
+
+
+    switch (type) {
+      case 'DELETE':
+        try {
+
+          // Delete selected product reviews based on their IDs
+          submit(data, { method: "post" });
+          // Replace option prevents creating a new entry in 
+        } catch (error) {
+          console.error('Error deleting product reviews:', error);
+        }
+        break;
+      case 'DISABLE':
+        try {
+
+          // Delete selected product reviews based on their IDs
+          submit(data, { method: "post" });
+          // Replace option prevents creating a new entry in 
+        } catch (error) {
+          console.error('Error deleting product reviews:', error);
+        }
+        break;
+      case 'ACTIVE':
+        try {
+
+          // Delete selected product reviews based on their IDs
+          submit(data, { method: "post" });
+          // Replace option prevents creating a new entry in 
+        } catch (error) {
+          console.error('Error deleting product reviews:', error);
+        }
+        break;
+      default:
+        console.log('Unsupported action type');
+    }
+  };
 
   const rowMarkup = productReviews.map(
-    ({ id, productImage, productTitle, rating, comment, createdAt, first_name, last_name }, index) => (
+    ({ id, productImage, productTitle, rating, comment, createdAt, first_name, last_name, status }, index) => (
       <IndexTable.Row
         id={ id }
         key={ id }
@@ -90,24 +193,27 @@ export default function ProductReviews() {
         <IndexTable.Cell>{ first_name } { last_name }</IndexTable.Cell>
         <IndexTable.Cell>{ comment }</IndexTable.Cell>
         <IndexTable.Cell>{ rating }</IndexTable.Cell>
+        <IndexTable.Cell>{ status }</IndexTable.Cell>
         <IndexTable.Cell>
           { new Date(createdAt).toDateString() }
         </IndexTable.Cell>
       </IndexTable.Row>
     ),
   );
+
   const bulkActions = [
     {
       content: 'Delete Reviews',
-      onAction: () => console.log('Todo: implement bulk add tags'),
+
+      onAction: () => handleAction('DELETE'),
     },
     {
       content: 'Disable Reviews',
-      onAction: () => console.log('Todo: implement bulk remove tags'),
+      onAction: () => handleAction('DISABLE'),
     },
     {
       content: 'Activate Reviews',
-      onAction: () => console.log('Todo: implement bulk delete'),
+      onAction: () => handleAction('ACTIVE'),
     },
   ];
   return (
@@ -138,6 +244,7 @@ export default function ProductReviews() {
                   { title: 'Review By' },
                   { title: 'Comment' },
                   { title: 'Rating' },
+                  { title: 'Status' },
                   { title: 'Created At' },
                   // {
                   //   id: 'order-count',
