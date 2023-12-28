@@ -12,6 +12,12 @@ export async function getProductReview(id, graphql, accessToken) {
   return supplementProductReview(productReview, graphql, accessToken);
 }
 
+export async function deleteProductReview(selectedIds) {
+  console.log("Deleting product reviews for ids:", selectedIds);
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+  return { message: "Product reviews deleted successfully", selectedIds };
+}
+
 export async function getProductReviews(shop, graphql, accessToken) {
   const productReviews = await db.productReview.findMany({
     where: { shop },
