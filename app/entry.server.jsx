@@ -14,19 +14,18 @@ export default async function handleRequest(
   remixContext
 ) {
   addDocumentResponseHeaders(request, responseHeaders);
-  const callbackName = isbot(request.headers.get("user-agent"))
-    ? "onAllReady"
-    : "onShellReady";
+  const userAgent = request.headers.get("user-agent");
+  const callbackName = isbot(userAgent ?? "") ? "onAllReady" : "onShellReady";
 
   return new Promise((resolve, reject) => {
     const { pipe, abort } = renderToPipeableStream(
       <RemixServer
-        context={remixContext}
-        url={request.url}
-        abortDelay={ABORT_DELAY}
+        context={ remixContext }
+        url={ request.url }
+        abortDelay={ ABORT_DELAY }
       />,
       {
-        [callbackName]: () => {
+        [ callbackName ]: () => {
           const body = new PassThrough();
           const stream = createReadableStreamFromReadable(body);
 

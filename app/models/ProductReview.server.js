@@ -1,7 +1,7 @@
 // import qrcode from "qrcode";
-import invariant from "tiny-invariant";
-import db from "../db.server";
 
+import db from "../db.server";
+import { LATEST_API_VERSION } from "@shopify/shopify-app-remix/server";
 export async function getProductReview(id, graphql, accessToken) {
   const productReview = await db.productReview.findFirst({ where: { id } });
 
@@ -61,6 +61,7 @@ async function supplementProductReview(productReview, graphql, accessToken) {
     });
 
     if (!response.ok) {
+      console.log(response);
       throw new Error(`Failed to fetch data: ${response.statusText}`);
     }
 
@@ -69,10 +70,10 @@ async function supplementProductReview(productReview, graphql, accessToken) {
 
   try {
     const customerData = await fetchData(
-      `https://${productReview.shop}/admin/api/${process.env.REACT_APP_SHOP_API_VERSION}/customers/${productReview.userId}.json`
+      `https://${productReview.shop}/admin/api/${LATEST_API_VERSION}/customers/${productReview.userId}.json`
     );
     const productData = await fetchData(
-      `https://${productReview.shop}/admin/api/${process.env.REACT_APP_SHOP_API_VERSION}/products/${productReview.productId}.json`
+      `https://${productReview.shop}/admin/api/${LATEST_API_VERSION}/products/${productReview.productId}.json`
     );
 
     return {

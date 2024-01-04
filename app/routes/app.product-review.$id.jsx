@@ -120,8 +120,8 @@ export default function ProductReviewForm() {
   function handleSave() {
     const data = {
 
-      productId: formState.productId || 8027309211897,
-      userId: formState.userId || 7083761008889,
+      productId: formState.productId || 8958232592672,
+      userId: formState.userId || 7528454062368,
       rating: formState.rating || 5,
       comment: formState.comment || "",
       status: formState.status || "ACTIVE",
@@ -135,8 +135,8 @@ export default function ProductReviewForm() {
   function handleStatusChange(type) {
     const data = {
 
-      productId: formState.productId || 8027309211897,
-      userId: formState.userId || 7083761008889,
+      productId: formState.productId || 8958232592672,
+      userId: formState.userId || 7528454062368,
       rating: formState.rating || 5,
       comment: formState.comment || "",
       status: type,

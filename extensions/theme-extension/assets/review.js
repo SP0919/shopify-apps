@@ -1,44 +1,58 @@
-async function postReview() {
-  var comment = document.getElementById("comment").value;
-  var customerId = document.getElementById("customerId").value;
-  var productId = document.getElementById("productId").value;
-  var selectedRating = null;
-  for (var i = 1; i <= 5; i++) {
-    var radio = document.getElementById("rating" + i);
-    if (radio && radio.checked) {
-      selectedRating = radio.value;
-      break;
-    }
+async function postReview(type) {
+  const authToken = "298ed65bc38dfac39cfd98f28662f75c";
+  const url =
+    "https://mug-wallpapers-steady-discounted.trycloudflare.com/product-review-ajax";
+
+  let data = {};
+  if (type == 1) {
+    const comment = document.getElementById("comment").value;
+    const rating = document.getElementById("rating").value;
+    const customerId = document.getElementById("customerId").value;
+    const productId = document.getElementById("productId").value;
+    const shopId = document.getElementById("shopId").value;
+    data = {
+      comment: comment,
+      rating: rating,
+      customerId: customerId,
+      productId: productId,
+      shop: shopId,
+      apiType: "CREATE",
+    };
+  } else {
+    const productId = document.getElementById("productId").value;
+    const shopId = document.getElementById("shopId").value;
+    data = {
+      productId: productId,
+      shop: shopId,
+      apiType: "GET",
+    };
   }
-  if (!comment || !customerId || !productId || !selectedRating) {
-    console.error("All fields are required");
-    return;
-  }
-  let url =
-    "https://ht-endif-heath-alternatively.trycloudflare.com/app/productreview";
-  let data = {
-    comment: comment,
-    rating: selectedRating,
-    customerId: customerId,
-    productId: productId,
-  };
-  console.log("Data:", data);
+
   try {
-    const authToken = "682319af3c83bc2e52d60a0aada4aaad";
     const response = await fetch(url, {
-      method: "GET",
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
         Authorization: `Bearer ${authToken}`,
+        shop: "typo-001.myshopify.com",
       },
+      body: JSON.stringify(data),
     });
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
+
+    if (response.ok) {
+      console.log("Message sent successfully.");
+    } else {
+      console.error("Some error occurred:", response);
     }
-    const responseData = await response.json();
-    console.log("Response Data:", responseData);
   } catch (error) {
-    console.error("There was a problem with the fetch operation:", error);
+    console.error("An error occurred:", error.message);
   }
 }
+
+document.addEventListener("DOMContentLoaded", function () {
+  // Assuming you want to call postReview with type 1 on page load
+  postReview(0);
+
+  // Alternatively, if you want to call postReview with type 0 on page load
+  // postReview(0);
+});

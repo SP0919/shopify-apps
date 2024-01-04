@@ -59,10 +59,11 @@
       </div>
     </div>
     <div class="row">
-      <input type="submit" value="Submit" onclick="postReview()">
+      <input type="submit" value="Submit" onclick="postReview(1)">
     </div>
   </form>
   <div hidden>
+    <input type="text" name="shopname" id="shopId" value="{{ shop.domain }}">
     <input type="text" name="customer" id="customerId" value="{{ customer.id }}">
     <input type="text" name="product" id="productId" value="{{ product.id }}">
   </div>
